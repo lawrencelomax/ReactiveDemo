@@ -9,6 +9,7 @@
 #import "LLViewController.h"
 
 #import <ReactiveCocoa/ReactiveCocoa.h>
+#import "NSNotificationCenter+RACSupport.h"
 #import <libextobjc/EXTScope.h>
 
 @interface LLViewController ()
@@ -68,6 +69,16 @@
     RACSignal * buttonPressedSignal = [[self.button rac_signalForControlEvents:UIControlEventTouchUpInside] mapReplace:[UIImage imageNamed:@"wat_cat.gif"]];
     RACSignal * combinedSignal = [RACSignal merge:@[orientationImageSignal, buttonPressedSignal]];
     
+    RACSignal * applicationActiveSignal = [RACSignal merge:@[
+        [RACSignal return:nil],
+        [[[NSNotificationCenter defaultCenter] rac_addObserverForName:UIApplicationWillResignActiveNotification object:nil] mapReplace:[UIImage imageNamed:@"grumpy_cat.jpg"]],
+        [[[NSNotificationCenter defaultCenter] rac_addObserverForName:UIApplicationDidBecomeActiveNotification object:nil] mapReplace:nil]
+    ]];
+    
+    combinedSignal = [RACSignal combineLatest:@[combinedSignal, applicationActiveSignal] reduce:^id(UIImage * combinedImage, UIImage * applicationActiveImage){
+        return applicationActiveImage ?: combinedImage;
+    }];
+    
     RAC(self.imageView.image) = combinedSignal;
     
     RAC(self.button.enabled) = [orientationSignal map:^id(NSNumber * interfaceOrientationNumber) {
@@ -78,6 +89,7 @@
             return @(YES);
         }
     }];
+    
 }
 
 - (void) didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
