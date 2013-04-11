@@ -47,7 +47,7 @@
     [super viewDidLoad];
     
     @weakify(self)
-    RACSignal * orientationImageSignal = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+    RACSignal * orientationSignal = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
         @strongify(self)
         [subscriber sendNext:@(self.interfaceOrientation)];
         
@@ -56,7 +56,7 @@
         }];
     }];
     
-    orientationImageSignal = [orientationImageSignal map:^id(NSNumber * interfaceOrientationNumber) {
+    RACSignal * orientationImageSignal = [orientationSignal map:^id(NSNumber * interfaceOrientationNumber) {
         UIInterfaceOrientation interfaceOrientation = (UIInterfaceOrientation)[interfaceOrientationNumber integerValue];
         if(UIInterfaceOrientationIsPortrait(interfaceOrientation)){
             return [UIImage imageNamed:@"longcat.jpg"];
@@ -69,6 +69,15 @@
     RACSignal * combinedSignal = [RACSignal merge:@[orientationImageSignal, buttonPressedSignal]];
     
     RAC(self.imageView.image) = combinedSignal;
+    
+    RAC(self.button.enabled) = [orientationSignal map:^id(NSNumber * interfaceOrientationNumber) {
+        UIInterfaceOrientation interfaceOrientation = (UIInterfaceOrientation)[interfaceOrientationNumber integerValue];
+        if(UIInterfaceOrientationIsPortrait(interfaceOrientation)){
+            return @(NO);
+        } else {
+            return @(YES);
+        }
+    }];
 }
 
 - (void) didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
