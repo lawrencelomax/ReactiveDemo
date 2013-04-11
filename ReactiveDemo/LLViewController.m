@@ -17,12 +17,14 @@
 
 @implementation LLViewController
 {
-    
+    RACSubject * orientationSubject;
 }
 
 - (void)loadView
 {
     [super loadView];
+    
+    orientationSubject = [RACSubject subject];
     
     self.imageView = [[UIImageView alloc] initWithFrame:CGRectInset(self.view.bounds, 40, 40)];
     self.imageView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -35,10 +37,20 @@
 {
     [super viewDidLoad];
     
-    RACSignal * signal = [RACSignal return:[UIImage imageNamed:@"longcat.jpg"]];
-    RAC(self.imageView.image) = signal;
+    RACSignal * orientationImageSignal = [orientationSubject map:^id(NSNumber * interfaceOrientationNumber) {
+        UIInterfaceOrientation interfaceOrientation = (UIInterfaceOrientation)[interfaceOrientationNumber integerValue];
+        if(UIInterfaceOrientationIsPortrait(interfaceOrientation)){
+            return [UIImage imageNamed:@"longcat.jpg"];
+        } else {
+            return [UIImage imageNamed:@"serious_cat.jpg"];
+        }
+    }];
+    
+    RAC(self.imageView.image) = orientationImageSignal;
 }
 
-
+- (void) didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
+    [orientationSubject sendNext:@(self.interfaceOrientation)];
+}
 
 @end
