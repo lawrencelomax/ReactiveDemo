@@ -31,6 +31,15 @@
     self.imageView.backgroundColor = [UIColor blueColor];
     self.imageView.contentMode = UIViewContentModeScaleAspectFit;
     [self.view addSubview:self.imageView];
+    
+    self.button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    self.button.frame = CGRectMake(CGRectGetMinX(self.imageView.frame),
+                                   CGRectGetMaxY(self.imageView.frame),
+                                   CGRectGetWidth(self.imageView.frame),
+                                   40);
+    self.button.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
+    [self.button setTitle:@"????????" forState:UIControlStateNormal];
+    [self.view addSubview:self.button];
 }
 
 - (void)viewDidLoad
@@ -56,7 +65,10 @@
         }
     }];
     
-    RAC(self.imageView.image) = orientationImageSignal;
+    RACSignal * buttonPressedSignal = [[self.button rac_signalForControlEvents:UIControlEventTouchUpInside] mapReplace:[UIImage imageNamed:@"wat_cat.gif"]];
+    RACSignal * combinedSignal = [RACSignal merge:@[orientationImageSignal, buttonPressedSignal]];
+    
+    RAC(self.imageView.image) = combinedSignal;
 }
 
 - (void) didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {

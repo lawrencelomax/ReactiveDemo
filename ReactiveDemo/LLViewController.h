@@ -11,5 +11,6 @@
 @interface LLViewController : UIViewController
 
 @property (nonatomic, strong) UIImageView * imageView;
+@property (nonatomic, strong) UIButton * button;
 
 @end
