@@ -9,12 +9,16 @@
 #import "LLViewController.h"
 
 #import <ReactiveCocoa/ReactiveCocoa.h>
+#import <libextobjc/EXTScope.h>
 
 @interface LLViewController ()
 
 @end
 
 @implementation LLViewController
+{
+    
+}
 
 - (void)loadView
 {
@@ -23,6 +27,7 @@
     self.imageView = [[UIImageView alloc] initWithFrame:CGRectInset(self.view.bounds, 40, 40)];
     self.imageView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     self.imageView.backgroundColor = [UIColor blueColor];
+    self.imageView.contentMode = UIViewContentModeScaleAspectFit;
     [self.view addSubview:self.imageView];
 }
 
@@ -30,7 +35,14 @@
 {
     [super viewDidLoad];
     
+    RACSignal * signal = [RACSignal return:@(YES)];
     
+    @weakify(self)
+    [signal subscribeNext:^(id x) {
+        @strongify(self)
+        
+        self.imageView.image = [UIImage imageNamed:@"longcat.jpg"];
+    }];
 }
 
 
