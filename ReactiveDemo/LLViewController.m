@@ -35,14 +35,8 @@
 {
     [super viewDidLoad];
     
-    RACSignal * signal = [RACSignal return:@(YES)];
-    
-    @weakify(self)
-    [signal subscribeNext:^(id x) {
-        @strongify(self)
-        
-        self.imageView.image = [UIImage imageNamed:@"longcat.jpg"];
-    }];
+    RACSignal * signal = [RACSignal return:[UIImage imageNamed:@"longcat.jpg"]];
+    RAC(self.imageView.image) = signal;
 }
 
 
