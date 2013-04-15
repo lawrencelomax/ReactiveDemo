@@ -76,8 +76,14 @@
         [[[NSNotificationCenter defaultCenter] rac_addObserverForName:UIApplicationDidBecomeActiveNotification object:nil] mapReplace:nil]
     ]];
     
-    combinedSignal = [RACSignal combineLatest:@[combinedSignal, applicationActiveSignal] reduce:^id(UIImage * combinedImage, UIImage * applicationActiveImage){
-        return applicationActiveImage ?: combinedImage;
+    RACSignal * caturdaySignal = [[[self class] resubscribingSignal:[[self class] canHasCaturdayFake] withDelay:5] map:^id(NSNumber * canHas) {
+        return [canHas boolValue] ? [UIImage imageNamed:@"ninja_cat.jpg"] : nil;
+    }];
+    caturdaySignal = [[RACSignal return:nil] concat:caturdaySignal];
+    
+    combinedSignal = [RACSignal combineLatest:@[combinedSignal, applicationActiveSignal, caturdaySignal] reduce:^id(UIImage * combinedImage, UIImage * applicationActiveImage, UIImage * caturdayImage){
+        UIImage * image = caturdayImage ?: (applicationActiveImage ?: combinedImage);
+        return image;
     }];
     
     RAC(self.imageView.image) = combinedSignal;
@@ -126,18 +132,19 @@
 
 + (RACSignal *) canHasCaturdayFake
 {
-    return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-        u_int32_t random = arc4random_uniform(4);
+    return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+        u_int32_t random = arc4random_uniform(2);
         BOOL canHas = (random == 0) ? YES : NO;
         [subscriber sendNext:@(canHas)];
+        [subscriber sendCompleted];
         return nil;
-    }];
+    }] subscribeOn:[RACScheduler mainThreadScheduler]];
 }
 
 + (RACSignal *) resubscribingSignal:(RACSignal *)signal withDelay:(NSTimeInterval)timeInterval
 {
     return [[signal
-             concat: [[[RACSignal interval:timeInterval] take:1] ignoreElements] ]
+             concat: [[[[RACSignal interval:timeInterval] take:1] ignoreElements] subscribeOn:[RACScheduler mainThreadScheduler]]]
             repeat];
 }
 
