@@ -105,7 +105,9 @@
         
         AFJSONRequestOperation * request = [AFJSONRequestOperation JSONRequestOperationWithRequest:urlRequest success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
             
-            [subscriber sendNext:JSON];
+            NSNumber * canHas = JSON[@"canHas"];
+            
+            [subscriber sendNext:canHas];
             [subscriber sendCompleted];
             
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
