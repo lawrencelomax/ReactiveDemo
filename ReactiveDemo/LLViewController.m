@@ -124,4 +124,21 @@
     }];
 }
 
++ (RACSignal *) canHasCaturdayFake
+{
+    return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+        u_int32_t random = arc4random_uniform(4);
+        BOOL canHas = (random == 0) ? YES : NO;
+        [subscriber sendNext:@(canHas)];
+        return nil;
+    }];
+}
+
++ (RACSignal *) resubscribingSignal:(RACSignal *)signal withDelay:(NSTimeInterval)timeInterval
+{
+    return [[signal
+             concat: [[[RACSignal interval:timeInterval] take:1] ignoreElements] ]
+            repeat];
+}
+
 @end
