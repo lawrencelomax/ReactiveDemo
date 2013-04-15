@@ -11,6 +11,7 @@
 #import <ReactiveCocoa/ReactiveCocoa.h>
 #import "NSNotificationCenter+RACSupport.h"
 #import <libextobjc/EXTScope.h>
+#import <AFNetworking/AFNetworking.h>
 
 @interface LLViewController ()
 
@@ -94,6 +95,31 @@
 
 - (void) didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
     [orientationSubject sendNext:@(self.interfaceOrientation)];
+}
+
++ (RACSignal *) canHasCaturday
+{
+    return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+        NSURL * url = [NSURL URLWithString:@"http://www.abevigoda.com"];
+        NSURLRequest * urlRequest = [NSURLRequest requestWithURL:url];
+        
+        AFJSONRequestOperation * request = [AFJSONRequestOperation JSONRequestOperationWithRequest:urlRequest success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+            
+            [subscriber sendNext:JSON];
+            [subscriber sendCompleted];
+            
+        } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+            
+            [subscriber sendError:error];
+            
+        }];
+        [request start];
+        
+        return [RACDisposable disposableWithBlock:^{
+            request.completionBlock = ^{};
+            [request cancel];
+        }];
+    }];
 }
 
 @end
