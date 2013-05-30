@@ -48,7 +48,6 @@
 {
     [super viewDidLoad];
     
-    @weakify(self)
     RACSignal * orientationSignal = [orientationSubject startWith:@(self.interfaceOrientation)];
     
     RACSignal * orientationImageSignal = [orientationSignal map:^id(NSNumber * interfaceOrientationNumber) {
