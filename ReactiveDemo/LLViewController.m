@@ -49,14 +49,7 @@
     [super viewDidLoad];
     
     @weakify(self)
-    RACSignal * orientationSignal = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-        @strongify(self)
-        [subscriber sendNext:@(self.interfaceOrientation)];
-        
-        return [orientationSubject subscribeNext:^(id x) {
-            [subscriber sendNext:x];
-        }];
-    }];
+    RACSignal * orientationSignal = [orientationSubject startWith:@(self.interfaceOrientation)];
     
     RACSignal * orientationImageSignal = [orientationSignal map:^id(NSNumber * interfaceOrientationNumber) {
         UIInterfaceOrientation interfaceOrientation = (UIInterfaceOrientation)[interfaceOrientationNumber integerValue];
@@ -70,16 +63,15 @@
     RACSignal * buttonPressedSignal = [[self.button rac_signalForControlEvents:UIControlEventTouchUpInside] mapReplace:[UIImage imageNamed:@"wat_cat.gif"]];
     RACSignal * combinedSignal = [RACSignal merge:@[orientationImageSignal, buttonPressedSignal]];
     
-    RACSignal * applicationActiveSignal = [RACSignal merge:@[
-        [RACSignal return:nil],
+    RACSignal * applicationActiveSignal = [[RACSignal merge:@[
         [[[NSNotificationCenter defaultCenter] rac_addObserverForName:UIApplicationWillResignActiveNotification object:nil] mapReplace:[UIImage imageNamed:@"grumpy_cat.jpg"]],
         [[[NSNotificationCenter defaultCenter] rac_addObserverForName:UIApplicationDidBecomeActiveNotification object:nil] mapReplace:nil]
-    ]];
+    ]] startWith:nil];
     
     RACSignal * caturdaySignal = [[[self class] resubscribingSignal:[[self class] canHasCaturdayFake] withDelay:5] map:^id(NSNumber * canHas) {
         return [canHas boolValue] ? [UIImage imageNamed:@"ninja_cat.jpg"] : nil;
     }];
-    caturdaySignal = [[RACSignal return:nil] concat:caturdaySignal];
+    caturdaySignal = [caturdaySignal startWith:nil];
     
     combinedSignal = [RACSignal combineLatest:@[combinedSignal, applicationActiveSignal, caturdaySignal] reduce:^id(UIImage * combinedImage, UIImage * applicationActiveImage, UIImage * caturdayImage){
         UIImage * image = caturdayImage ?: (applicationActiveImage ?: combinedImage);
