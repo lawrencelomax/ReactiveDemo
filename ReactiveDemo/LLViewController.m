@@ -48,15 +48,7 @@
 {
     [super viewDidLoad];
     
-    @weakify(self)
-    RACSignal * orientationSignal = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-        @strongify(self)
-        [subscriber sendNext:@(self.interfaceOrientation)];
-        
-        return [orientationSubject subscribeNext:^(id x) {
-            [subscriber sendNext:x];
-        }];
-    }];
+    RACSignal * orientationSignal = [orientationSubject startWith:@(self.interfaceOrientation)];
     
     RACSignal * orientationImageSignal = [orientationSignal map:^id(NSNumber * interfaceOrientationNumber) {
         UIInterfaceOrientation interfaceOrientation = (UIInterfaceOrientation)[interfaceOrientationNumber integerValue];
@@ -67,19 +59,25 @@
         }
     }];
     
-    RACSignal * buttonPressedSignal = [[self.button rac_signalForControlEvents:UIControlEventTouchUpInside] mapReplace:[UIImage imageNamed:@"wat_cat.gif"]];
+    RACSignal * buttonPressedSignal = [[self.button
+        rac_signalForControlEvents:UIControlEventTouchUpInside]
+        mapReplace:[UIImage imageNamed:@"wat_cat.gif"]];
+
     RACSignal * combinedSignal = [RACSignal merge:@[orientationImageSignal, buttonPressedSignal]];
     
-    RACSignal * applicationActiveSignal = [RACSignal merge:@[
-        [RACSignal return:nil],
-        [[[NSNotificationCenter defaultCenter] rac_addObserverForName:UIApplicationWillResignActiveNotification object:nil] mapReplace:[UIImage imageNamed:@"grumpy_cat.jpg"]],
-        [[[NSNotificationCenter defaultCenter] rac_addObserverForName:UIApplicationDidBecomeActiveNotification object:nil] mapReplace:nil]
-    ]];
+    RACSignal * applicationActiveSignal = [[RACSignal
+        merge:@[
+            [[[NSNotificationCenter defaultCenter] rac_addObserverForName:UIApplicationWillResignActiveNotification object:nil] mapReplace:[UIImage imageNamed:@"grumpy_cat.jpg"]],
+            [[[NSNotificationCenter defaultCenter] rac_addObserverForName:UIApplicationDidBecomeActiveNotification object:nil] mapReplace:nil]
+        ]]
+        startWith:nil];
     
-    RACSignal * caturdaySignal = [[[self class] resubscribingSignal:[[self class] canHasCaturdayFake] withDelay:5] map:^id(NSNumber * canHas) {
-        return [canHas boolValue] ? [UIImage imageNamed:@"ninja_cat.jpg"] : nil;
-    }];
-    caturdaySignal = [[RACSignal return:nil] concat:caturdaySignal];
+    RACSignal * caturdaySignal = [[[[self class]
+        resubscribingSignal:[[self class] canHasCaturdayFake] withDelay:5]
+        map:^id(NSNumber * canHas) {
+            return [canHas boolValue] ? [UIImage imageNamed:@"ninja_cat.jpg"] : nil;
+        }]
+        startWith:nil];
     
     combinedSignal = [RACSignal combineLatest:@[combinedSignal, applicationActiveSignal, caturdaySignal] reduce:^id(UIImage * combinedImage, UIImage * applicationActiveImage, UIImage * caturdayImage){
         UIImage * image = caturdayImage ?: (applicationActiveImage ?: combinedImage);
@@ -132,20 +130,22 @@
 
 + (RACSignal *) canHasCaturdayFake
 {
-    return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+    return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
         u_int32_t random = arc4random_uniform(2);
         BOOL canHas = (random == 0) ? YES : NO;
         [subscriber sendNext:@(canHas)];
         [subscriber sendCompleted];
         return nil;
-    }] subscribeOn:[RACScheduler mainThreadScheduler]];
+    }];
 }
 
 + (RACSignal *) resubscribingSignal:(RACSignal *)signal withDelay:(NSTimeInterval)timeInterval
 {
-    return [[signal
-             concat: [[[[RACSignal interval:timeInterval] take:1] ignoreElements] subscribeOn:[RACScheduler mainThreadScheduler]]]
-            repeat];
+    return [[[[RACSignal
+        interval:timeInterval]
+        mapReplace:signal]
+        switchToLatest]
+        deliverOn:[RACScheduler mainThreadScheduler]];
 }
 
 @end
