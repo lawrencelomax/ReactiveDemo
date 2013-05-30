@@ -147,7 +147,7 @@
             interval:timeInterval]
             take:1]
             ignoreElements]
-            subscribeOn:[RACScheduler mainThreadScheduler]]]
+            deliverOn:[RACScheduler mainThreadScheduler]]]
         repeat];
 }
 
