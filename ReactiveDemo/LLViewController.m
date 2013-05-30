@@ -124,13 +124,13 @@
 
 + (RACSignal *) canHasCaturdayFake
 {
-    return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+    return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
         u_int32_t random = arc4random_uniform(2);
         BOOL canHas = (random == 0) ? YES : NO;
         [subscriber sendNext:@(canHas)];
         [subscriber sendCompleted];
         return nil;
-    }] subscribeOn:[RACScheduler mainThreadScheduler]];
+    }];
 }
 
 + (RACSignal *) resubscribingSignal:(RACSignal *)signal withDelay:(NSTimeInterval)timeInterval
