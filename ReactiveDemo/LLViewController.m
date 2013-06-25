@@ -141,11 +141,13 @@
 
 + (RACSignal *) resubscribingSignal:(RACSignal *)signal withDelay:(NSTimeInterval)timeInterval
 {
-    return [[[[RACSignal
-        interval:timeInterval]
-        mapReplace:signal]
-        switchToLatest]
-        deliverOn:[RACScheduler mainThreadScheduler]];
+    RACSignal *once = [[[RACSignal interval:timeInterval]
+                                       take:1]
+                                sequenceNext:^{
+                                    return signal;
+                                 }];
+    
+    return [[once repeat] deliverOn:[RACScheduler mainThreadScheduler]];
 }
 
 @end
